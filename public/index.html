@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>CV AI Generator</title>
+
+  <!-- Librairie PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      margin: 8px 0;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    textarea {
+      resize: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .generate {
+      background: #667eea;
+      color: white;
+    }
+
+    .generate:hover {
+      background: #5a67d8;
+    }
+
+    .copy {
+      background: #48bb78;
+      color: white;
+    }
+
+    .copy:hover {
+      background: #38a169;
+    }
+
+    .pdf {
+      background: #ed8936;
+      color: white;
+    }
+
+    .pdf:hover {
+      background: #dd6b20;
+    }
+
+    #output {
+      background: #f7fafc;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 10px;
+      white-space: pre-wrap;
+      min-height: 100px;
+    }
+
+    #loading {
+      text-align: center;
+      display: none;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🚀 Générateur CV / Lettre / Email</h1>
+
+<select id="type">
+  <option value="CV">CV</option>
+  <option value="lettre de motivation">Lettre de motivation</option>
+  <option value="email professionnel">Email professionnel</option>
+</select>
+
+<select id="template">
+  <option value="modern">Modern</option>
+  <option value="classic">Classique</option>
+  <option value="premium">Premium (colonne)</option>
+  <option value="minimal">Minimal</option>
+</select>
+
+<input id="name" placeholder="Nom complet">
+<input id="job" placeholder="Métier / Poste">
+
+<textarea id="skills" rows="3" placeholder="Compétences"></textarea>
+<textarea id="experience" rows="3" placeholder="Expérience"></textarea>
+<textarea id="education" rows="3" placeholder="Formation"></textarea>
+<textarea id="jobOffer" rows="3" placeholder="Offre d'emploi / entreprise / contexte"></textarea>
+
+<button class="generate" onclick="generate()">✨ Générer</button>
+<button class="copy" onclick="copyText()">📋 Copier</button>
+<button class="pdf" onclick="downloadPDF()">📄 Télécharger PDF</button>
+
+<p id="loading">⏳ Génération en cours...</p>
+
+<textarea id="output" rows="15" style="
+  width:100%;
+  margin-top:20px;
+  padding:15px;
+  border-radius:10px;
+  border:1px solid #ccc;
+  font-family: Arial;
+  white-space: pre-wrap;
+"></textarea>
+
+</div>
+
+<script>
+let lastResult = "";
+
+async function generate() {
+  const type = document.getElementById("type").value;
+  const name = document.getElementById("name").value;
+  const job = document.getElementById("job").value;
+  const skills = document.getElementById("skills").value;
+  const experience = document.getElementById("experience").value;
+  const education = document.getElementById("education").value;
+  const jobOffer = document.getElementById("jobOffer").value;
+
+  const prompt = `
+Nom : ${name}
+Poste : ${job}
+Compétences : ${skills}
+Expérience : ${experience}
+Formation : ${education}
+${jobOffer ? "Offre : " + jobOffer : ""}
+`;
+
+  document.getElementById("loading").style.display = "block";
+
+  try {
+    const res = await fetch("/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        prompt,
+        type,
+        name,
+        job,
+        skills,
+        experience,
+        education,
+        jobOffer
+      })
+    });
+
+    const data = await res.json();
+
+    document.getElementById("loading").style.display = "none";
+
+    document.getElementById("output").value = data.result;
+
+  } catch (error) {
+    console.error(error);
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("output").value = "Erreur génération";
+  }
+}
+
+function copyText() {
+  if (!lastResult) {
+    alert("Rien à copier !");
+    return;
+  }
+
+  navigator.clipboard.writeText(lastResult);
+  alert("Copié !");
+}
+
+function downloadPDF() {
+  if (!lastResult) {
+    alert("Génère d'abord un document !");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const template = document.getElementById("template").value;
+
+  const name = document.getElementById("name").value || "Nom Prénom";
+  const job = document.getElementById("job").value || "Poste";
+
+  const primary = [102, 126, 234];
+  const dark = [40, 40, 40];
+
+  let y = 20;
+
+  // =========================
+  // 📌 TEMPLATE CLASSIC
+  // =========================
+  if (template === "classic") {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.text(name, 20, y);
+    y += 10;
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(job, 20, y);
+    y += 10;
+  }
+
+  // =========================
+  // 📌 TEMPLATE MODERN
+  // =========================
+  if (template === "modern") {
+    doc.setFillColor(...primary);
+    doc.rect(0, 0, 210, 25, "F");
+
+    doc.setTextColor(255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text(name, 20, 16);
+
+    doc.setTextColor(0);
+    y = 40;
+  }
+
+  // =========================
+  // 📌 TEMPLATE PREMIUM (colonne)
+  // =========================
+  if (template === "premium") {
+    doc.setFillColor(...primary);
+    doc.rect(0, 0, 60, 297, "F");
+
+    doc.setTextColor(255);
+    doc.setFontSize(14);
+    doc.text(name, 10, 20);
+
+    doc.setFontSize(10);
+    doc.text(job, 10, 30);
+
+    doc.setTextColor(0);
+    y = 20;
+  }
+
+  // =========================
+  // 📌 TEMPLATE MINIMAL
+  // =========================
+  if (template === "minimal") {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text(name, 20, y);
+    y += 8;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.text(job, 20, y);
+    y += 10;
+  }
+
+  // =========================
+  // 📄 CONTENU COMMUN
+  // =========================
+  doc.setFontSize(11);
+  doc.setTextColor(...dark);
+
+  const lines = document.getElementById("output").value.split("\n");
+
+  lines.forEach(line => {
+    if (y > 280) {
+      doc.addPage();
+      y = 20;
+    }
+
+    const split = doc.splitTextToSize(line, 170);
+    doc.text(split, template === "premium" ? 70 : 20, y);
+    y += split.length * 6;
+  });
+
+  doc.save(`cv-${template}.pdf`);
+}
+</script>
+
+</body>
+</html>
