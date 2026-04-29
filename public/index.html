@@ -2,15 +2,22 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>CV AI Pro</title>
 
+<title>CV AI - Générateur de CV gratuit avec intelligence artificielle</title>
+
+<meta name="description" content="Crée un CV professionnel gratuitement avec l'intelligence artificielle. Génère des CV, lettres de motivation et emails en quelques secondes.">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body {
-  font-family: Arial;
+  font-family: Arial, sans-serif;
   background: linear-gradient(135deg,#667eea,#764ba2);
   margin: 0;
+  padding: 0;
   color: #333;
 }
 
@@ -25,7 +32,7 @@ body {
 
 h1 {
   text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
 }
 
 .subtitle {
@@ -75,24 +82,21 @@ button {
   color: white;
 }
 
-.success {
-  color: green;
+#status {
   text-align: center;
   margin-top: 10px;
 }
 
-.error {
-  color: red;
-  text-align: center;
-  margin-top: 10px;
-}
+.success { color: green; }
+.error { color: red; }
 
 #output {
   margin-top: 20px;
+  width: 100%;
+  min-height: 200px;
   padding: 15px;
   border-radius: 10px;
   border: 1px solid #ccc;
-  min-height: 150px;
 }
 </style>
 </head>
@@ -102,7 +106,7 @@ button {
 <div class="container">
 
 <h1>🚀 Générateur CV IA</h1>
-<p class="subtitle">Crée un CV professionnel en 30 secondes</p>
+<p class="subtitle">Crée un CV professionnel en quelques secondes</p>
 
 <select id="type">
   <option value="CV">CV</option>
@@ -110,24 +114,28 @@ button {
   <option value="email professionnel">Email professionnel</option>
 </select>
 
-<input id="name" placeholder="Nom   Ex : Jean Dupont">
-<input id="job" placeholder="Métier   Ex : Développeur web">
+<input id="name" placeholder="Nom complet (ex: Jean Dupont)">
+<input id="job" placeholder="Poste (ex: Développeur web)">
 
-<textarea id="skills" rows="3" placeholder="Compétences   Ex : HTML, CSS, JavaScript, travail en équipe"></textarea>
-<textarea id="experience" rows="3" placeholder="Expérience   Ex : Stage chez X, projet Y"></textarea>
-<textarea id="education" rows="2" placeholder="Formation   Ex : BTS SIO"></textarea>
+<textarea id="skills" placeholder="Compétences (HTML, CSS, JS...)"></textarea>
+<textarea id="experience" placeholder="Expérience professionnelle"></textarea>
+<textarea id="education" placeholder="Formation"></textarea>
+<textarea id="jobOffer" placeholder="Offre d'emploi (optionnel)"></textarea>
 
-<textarea id="jobOffer" rows="2" placeholder="Offre d'emploi (optionnel)"></textarea>
-
-<button class="generate" id="generateBtn" onclick="generate()">✨ Générer</button>
+<button class="generate" id="btn" onclick="generate()">✨ Générer</button>
 
 <div id="status"></div>
 
-<textarea id="output" placeholder="Ton document apparaîtra ici..."></textarea>
+<textarea id="output" placeholder="Ton CV apparaîtra ici..."></textarea>
 
 <button class="copy" onclick="copyText()">📋 Copier</button>
 <button class="pdf" onclick="downloadPDF()">📄 Télécharger PDF</button>
 
+</div>
+
+<!-- SEO TEXT -->
+<div style="display:none">
+Générateur de CV IA gratuit, création de CV automatique, lettre de motivation, outil CV en ligne, CV rapide avec intelligence artificielle.
 </div>
 
 <script>
@@ -135,10 +143,14 @@ button {
 let lastResult = "";
 
 async function generate() {
-  const btn = document.getElementById("generateBtn");
+  const btn = document.getElementById("btn");
   const status = document.getElementById("status");
 
-  const dataToSend = {
+  btn.innerText = "⏳ Génération...";
+  btn.disabled = true;
+  status.innerHTML = "";
+
+  const data = {
     type: document.getElementById("type").value,
     name: document.getElementById("name").value,
     job: document.getElementById("job").value,
@@ -148,24 +160,19 @@ async function generate() {
     jobOffer: document.getElementById("jobOffer").value
   };
 
-  // UX loading
-  btn.innerText = "⏳ Génération...";
-  btn.disabled = true;
-  status.innerHTML = "";
-
   try {
     const res = await fetch("/generate", {
       method: "POST",
       headers: {"Content-Type":"application/json"},
-      body: JSON.stringify(dataToSend)
+      body: JSON.stringify(data)
     });
 
-    const data = await res.json();
+    const json = await res.json();
 
-    lastResult = data.result;
+    lastResult = json.result;
     document.getElementById("output").value = lastResult;
 
-    status.innerHTML = "<div class='success'>✅ Document généré avec succès</div>";
+    status.innerHTML = "<div class='success'>✅ CV généré avec succès</div>";
 
   } catch (err) {
     status.innerHTML = "<div class='error'>❌ Erreur serveur</div>";
@@ -182,7 +189,7 @@ function copyText() {
 }
 
 function downloadPDF() {
-  if (!lastResult) return alert("Génère d'abord un document");
+  if (!lastResult) return alert("Génère d'abord un CV");
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
@@ -190,7 +197,7 @@ function downloadPDF() {
   const lines = doc.splitTextToSize(lastResult, 180);
   doc.text(lines, 15, 20);
 
-  doc.save("document.pdf");
+  doc.save("cv-ai.pdf");
 }
 
 </script>
