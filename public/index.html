@@ -128,6 +128,7 @@
 <button class="generate" onclick="generate()">✨ Générer</button>
 <button class="copy" onclick="copyText()">📋 Copier</button>
 <button class="pdf" onclick="downloadPDF()">📄 Télécharger PDF</button>
+<button onclick="subscribe()">💳 S’abonner (5€)</button>
 
 <p id="loading">⏳ Génération en cours...</p>
 
@@ -147,6 +148,13 @@
 let lastResult = "";
 
 async function generate() {
+  const userHasPaid = true; // à remplacer plus tard
+
+  if (!userHasPaid) {
+    return res.json({
+      result: "❌ Tu dois t’abonner pour utiliser l’IA"
+    });
+  }
   const type = document.getElementById("type").value;
   const name = document.getElementById("name").value;
   const job = document.getElementById("job").value;
@@ -183,6 +191,7 @@ ${jobOffer ? "Offre : " + jobOffer : ""}
         jobOffer
       })
     });
+
 
     const data = await res.json();
 
@@ -311,6 +320,16 @@ function downloadPDF() {
 
   doc.save(`cv-${template}.pdf`);
 }
+
+async function subscribe() {
+  const res = await fetch("/create-checkout-session", {
+    method: "POST",
+  });
+
+  const data = await res.json();
+  window.location.href = data.url;
+}
+
 </script>
 
 </body>

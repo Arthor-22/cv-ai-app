@@ -1,5 +1,8 @@
 import express from "express";
 import cors from "cors";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
 
@@ -7,6 +10,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
+const PORT = process.env.PORT || 3000;
+
+// =========================
+// 🔥 ROUTE PRINCIPALE IA
+// =========================
 app.post("/generate", async (req, res) => {
   const { type, name, job, skills, experience, education, jobOffer } = req.body;
 
@@ -19,18 +27,19 @@ app.post("/generate", async (req, res) => {
     finalPrompt = `
 Tu es un expert en CV.
 
-Règles :
-- Français uniquement
-- Aucun *
-- Aucun contenu inventé
+RÈGLES :
+- Réponds uniquement en français
+- N'utilise aucun *
+- N'invente aucune information
+- Texte clair et structuré
 
-CV :
+Génère un CV professionnel :
 
 Nom : ${name}
 Poste : ${job}
 
 Résumé :
-3 lignes maximum
+(3 lignes maximum)
 
 Expérience :
 ${experience || "Non précisé"}
@@ -44,28 +53,33 @@ ${education || "Non précisé"}
   }
 
   // =========================
-  // ✉️ LETTRE
+  // ✉️ LETTRE DE MOTIVATION
   // =========================
   else if (type === "lettre de motivation") {
     finalPrompt = `
 Tu es un expert en lettres de motivation.
 
-Règles :
+RÈGLES :
 - Français uniquement
-- Texte fluide et professionnel
-- Aucun *
+- Ton naturel et professionnel
+- N'invente pas d'informations
+- Texte fluide sans *
+- Texte complet
 
-Lettre de motivation :
+Écris une lettre de motivation :
 
 Nom : ${name}
-Poste : ${job}
+Poste visé : ${job}
 Expérience : ${experience || "Non précisé"}
 Compétences : ${skills || "Non précisé"}
 Formation : ${education || "Non précisé"}
 Offre : ${jobOffer || "Non précisé"}
 
 Structure :
-Introduction, motivation, compétences, conclusion
+- Introduction
+- Motivation
+- Compétences
+- Conclusion
 `;
   }
 
@@ -76,52 +90,58 @@ Introduction, motivation, compétences, conclusion
     finalPrompt = `
 Tu es un expert en emails professionnels.
 
-Règles :
+RÈGLES :
 - Français uniquement
-- Court et poli
+- Court et professionnel
 - Aucun *
 
-Email :
+Écris un email professionnel :
 
 Nom : ${name}
-Objet : ${job}
+Objet : Candidature au poste de ${job}
 
-Contenu :
-Message professionnel complet
+Structure :
+- Objet
+- Message
+- Conclusion
 `;
   }
 
   try {
-    // 👉 ICI appel à Ollama
-    const response = await fetch("http://localhost:11434/api/generate", {
+    const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
       method: "POST",
       headers: {
+        "Authorization": `Bearer ${process.env.MISTRAL_API_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "mistral:latest",
-        prompt: finalPrompt,
-        stream: false
+        model: "mistral-small",
+        messages: [
+          { role: "user", content: finalPrompt }
+        ]
       })
     });
 
     const data = await response.json();
 
+    const text = data.choices?.[0]?.message?.content;
+
     res.json({
-      result: data.response || "Erreur génération"
+      result: text || "Erreur génération"
     });
 
   } catch (error) {
-    console.error("❌ ERREUR:", error);
+    console.error("❌ ERREUR MISTRAL:", error);
 
     res.json({
-      result: "Erreur serveur (Ollama non lancé ?)"
+      result: "Erreur serveur IA"
     });
   }
 });
 
-const PORT = process.env.PORT || 3000;
-
+// =========================
+// 🚀 LANCEMENT SERVEUR
+// =========================
 app.listen(PORT, () => {
-  console.log("Serveur lancé sur port " + PORT);
+  console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`);
 });
