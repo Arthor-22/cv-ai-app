@@ -9,10 +9,13 @@ app.get("/robots.txt", (req, res) => {
   res.setHeader("Content-Type", "text/plain");
   res.send("User-agent: *\nAllow: /");
 });
-
+app.use(express.static("public"));
+app.use((req, res, next) => {
+  res.setHeader("X-Robots-Tag", "index, follow");
+  next();
+});
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
 
 const PORT = process.env.PORT || 3000;
 
