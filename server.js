@@ -9,6 +9,7 @@ app.get("/robots.txt", (req, res) => {
   res.setHeader("Content-Type", "text/plain");
   res.send("User-agent: *\nAllow: /");
 });
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
