@@ -10,6 +10,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
+app.get("/robots.txt", (req, res) => {
+  res.type("text/plain");
+  res.send("User-agent: *\nAllow: /");
+});
+
 const PORT = process.env.PORT || 3000;
 
 // =========================
