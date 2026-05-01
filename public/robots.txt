@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://cv-ai-app-0ugo.onrender.com/sitemap.xml
