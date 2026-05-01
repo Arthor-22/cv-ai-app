@@ -5,15 +5,13 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
-
+app.get("/robots.txt", (req, res) => {
+  res.setHeader("Content-Type", "text/plain");
+  res.send("User-agent: *\nAllow: /");
+});
 app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
-
-app.get("/robots.txt", (req, res) => {
-  res.type("text/plain");
-  res.send("User-agent: *\nAllow: /");
-});
 
 const PORT = process.env.PORT || 3000;
 
